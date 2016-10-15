@@ -1,0 +1,167 @@
+module ManipulateDFA 
+where
+
+import DFA
+import Data.Char (isDigit, isLower)
+import Data.List (sort, nub, (\\))
+
+-- Incomplete stubs added by Shreyash Patodia
+-- For COMP30026: Models of Computation
+-- Assignment 2, 2016
+
+{------------------------------------------------------------------------
+    A skeleton Haskell script for COMP30026 Asg2, 2016.
+
+    It consists of a bunch of stubs, mainly function type signatures.
+
+    Harald Sondergaard
+    The University of Melbourne
+    September 2016
+------------------------------------------------------------------------}
+
+
+--  Keep lists sorted and without duplicates.
+
+tidy :: Ord a => [a] -> [a]
+tidy xs
+  = nub (sort xs)
+
+
+--  Calculate the set of reachable states in a given DFA.
+
+reachable :: DFA -> [State]
+reachable (states, alphabet, delta, start_state, accept_states)
+  = new
+    where
+      (old, new) = until stable explore ([], [start_state])
+      explore (old_reach, cur_reach) = (cur_reach, expand cur_reach)
+      expand reach = tidy (reach ++ successors reach)
+      successors reach = [y | ((x,_),y) <- delta, x `elem` reach]
+      stable (xs, ys) = xs == ys
+
+
+--  Calculate the set of generating states in a given DFA.
+
+generating :: DFA -> [State]
+generating (states, alphabet, delta, start_state, accept_states)
+  = new
+    where
+      (old, new) 
+        = until stable explore ([], accept_states)   
+      explore (old_gen, cur_gen) 
+        = (cur_gen, expand cur_gen)
+      expand gen 
+        = tidy (gen ++ predessors gen)
+      predessors gen 
+        = [y | ((y, _), x) <- delta, x `elem` gen]
+      stable (xs, ys)
+        = xs == ys          
+                 
+
+
+--  Trim a DFA, that is, keep only reachable, generating states
+--  (the start state should always be kept).  
+
+trim :: DFA -> DFA
+trim (states, alphabet, [], start_state, accept_state)
+  = ([], alphabet, [], start_state, [])
+trim (states, alphabet, delta, start_state, accept_states)
+  = (useful_states, new_alphabet, useful_delta, start_state, new_acpt_states)
+    where  
+      useful_states 
+        = intersect reachable_states gen_states
+      reachable_states 
+        = reachable (states, alphabet, delta, start_state, acpt_states)
+      gen_states 
+        = generating (states, alphabet, delta, start_state, acpt_states)
+      new_accept_states 
+        = intersect reach accept_states
+          useful_delta = [((state_from, sym), state_to) |
+          state_from <- useful_states
+          `and`
+          state_to <- useful_states,
+          ((state_from, sym), state_to) `elem` useful_states]
+
+
+
+
+
+    --[useful_state | 
+    --- useful_state <- reach (states, alphabet, delta, start_state, accept_states)
+    --`and` 
+    --useful_state <- generating (states, alphabet, delta, start_state, accept_states)
+    --]
+    --useful_delta = [((state_from, sym), state_to] |
+    --state_from <- useful_state
+    --`and`
+    --state_to <- useful_state
+    
+
+
+
+
+-------------------------------------------------------------------------
+
+--  Complete a DFA, that is, make all transitions explict.  For a DFA,
+--  the transition function is always understood to be total.
+
+complete :: DFA -> DFA
+complete dfa
+  = dfa                -- JUST A STUB, NOT CORRECT, FIX THIS (QUESTION 6)
+
+
+-------------------------------------------------------------------------
+
+--  Systematically replace the names of states in a DFA with 1..n.
+
+normalise :: DFA -> DFA
+normalise dfa
+  = dfa                -- JUST A STUB, NOT CORRECT, FIX THIS (QUESTION 7)
+
+
+-------------------------------------------------------------------------
+
+--  To complete and then normalise a DFA:
+
+full :: DFA -> DFA
+full
+  = normalise . complete
+
+
+--  For a given DFA d, generate a DFA d' so that the languages of d
+--  and d' are complementary.
+
+complement :: DFA -> DFA
+complement dfa
+  = dfa                -- JUST A STUB, NOT CORRECT, FIX THIS (QUESTION 8)
+
+
+-------------------------------------------------------------------------
+
+--  Given DFAs d1 and d', generate a DFA for the intersection of the
+--  languages recognised by d1 and d2.
+
+prod :: DFA -> DFA -> DFA
+prod dfa1 dfa2
+  = dfa2               -- JUST A STUB, NOT CORRECT, FIX THIS (QUESTION 9)
+
+
+-------------------------------------------------------------------------
+
+--  Here is an example (trimmed) DFA; it recognises a*ab*c*
+
+dex :: DFA 
+dex 
+  = ([0,1,2,3], "abc", t1, 0, [1,2,3])
+    where 
+      t1 = [ ((0,'a'), 1)
+           , ((1,'a'), 1)
+           , ((1,'b'), 2)
+           , ((1,'c'), 3)
+           , ((2,'b'), 2)
+           , ((2,'c'), 3)
+           , ((3,'c'), 3)
+           ]
+
+-------------------------------------------------------------------------
+
