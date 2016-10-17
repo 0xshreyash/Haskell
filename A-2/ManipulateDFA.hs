@@ -1,4 +1,4 @@
-module ManipulateDFA 
+module ManipulateDFA
 where
 
 import DFA
@@ -46,56 +46,56 @@ generating :: DFA -> [State]
 generating (states, alphabet, delta, start_state, accept_states)
   = new
     where
-      (old, new) 
-        = until stable explore ([], accept_states)   
-      explore (old_gen, cur_gen) 
+      (old, new)
+        = until stable explore ([], accept_states)
+      explore (old_gen, cur_gen)
         = (cur_gen, expand cur_gen)
-      expand gen 
+      expand gen
         = tidy (gen ++ predessors gen)
-      predessors gen 
+      predessors gen
         = [y | ((y, _), x) <- delta, x `elem` gen]
       stable (xs, ys)
-        = xs == ys          
-                 
+        = xs == ys
+
 
 
 --  Trim a DFA, that is, keep only reachable, generating states
---  (the start state should always be kept).  
+--  (the start state should always be kept).
 
 trim :: DFA -> DFA
 trim (states, alphabet, delta, start_state, accept_states)
   = (useful_states, alphabet, useful_delta, start_state, new_accept_states)
-    where 
-      gen_states 
+    where
+      gen_states
         = generating (states, alphabet, delta, start_state, accept_states)
       gen_delta
         = [gen_transition | gen_transition <- delta,
             fst (fst gen_transition) `elem` gen_states,
             snd gen_transition `elem` gen_states]
-      useful_states  
+      useful_states
         = reachable (gen_states, alphabet, gen_delta, start_state, accept_states)
-      useful_delta 
+      useful_delta
         = [useful_trans | useful_trans <- gen_delta,
             fst (fst useful_trans) `elem` useful_states,
             snd useful_trans `elem` useful_states]
       new_accept_states
         = intersect accept_states useful_states
-    
 
 
 
 
 
-    --[useful_state | 
+
+    --[useful_state |
     --- useful_state <- reach (states, alphabet, delta, start_state, accept_states)
-    --`and` 
+    --`and`
     --useful_state <- generating (states, alphabet, delta, start_state, accept_states)
     --]
     --useful_delta = [((state_from, sym), state_to] |
     --state_from <- useful_state
     --`and`
     --state_to <- useful_state
-    
+
 
 
 
@@ -110,10 +110,10 @@ complete (states, alphabet, delta, start_state, accept_states)
   | already_complete
       = (states, alphabet, delta, start_state, accept_states)
   | otherwise
-      = (all_states, alphabet, comp_delta, start_state, accept_states)  
-    where 
+      = (all_states, alphabet, comp_delta, start_state, accept_states)
+    where
       already_complete = (all_transitions == map fst delta)
-      all_transitions 
+      all_transitions
         = [(state, sym) |
             state <- states,
             sym <- alphabet]
@@ -121,38 +121,38 @@ complete (states, alphabet, delta, start_state, accept_states)
        = maximum states + 1
       all_states
        = states ++ [new_state]
-      all_perms 
-        = [(state, sym) |
-            state <- all_states,
+      all_perms
+        = [(st, sym) |
+            st <- all_states,
             sym <- alphabet]
       required_delta_for
         = tidy all_perms \\ map fst delta
       comp_delta
-        = [((st, sym), new_state) | 
+        = tidy [((st, sym), new_state) |
             (st, sym) <- required_delta_for] ++
-     		delta
+              delta
 
 
 
 
-      {-complete_delta 
+      {-complete_delta
         = tidy delta ++ explicit_transitions
       explicit_transitions
-        = tidy [((state, symbol), state) | 
+        = tidy [((state, symbol), state) |
             state <- states,
             symbol <- alphabet,
             (st, sym) <- required_delta,
             state == st,
             symbol == sym]
-      all_perms 
+      all_perms
         = [(state, sym) |
             state <- states,
             sym <- alphabet]
       required_delta
         = tidy all_perms \\ map fst delta-}
- 
 
-            
+
+
 
 
 -------------------------------------------------------------------------
@@ -171,7 +171,7 @@ normalise (states, alphabet, delta, start_state, accept_states)
     not_used_vals
       = tidy allowed_vals \\ allowed_vals_used
     -- Finding the values to be replace and what to replace them with
-    replace_by 
+    replace_by
       = replace states not_used_vals max_val
     replace [] [] max_val = []
     replace states [] max_val = []
@@ -181,9 +181,9 @@ normalise (states, alphabet, delta, start_state, accept_states)
       | otherwise = [(st, poss_st)] ++ replace sts poss_sts max_val
     -- Not a problem even if the start state is not > max_val since
     -- we have things like (1, 1) in replace_by as well
-    norm_start_state 
-      = head [n_s_st | (x, n_s_st) <- replace_by,  
-                x == start_state] 
+    norm_start_state
+      = head [n_s_st | (x, n_s_st) <- replace_by,
+                x == start_state]
     norm_delta
       = [((sf, sym), st) | ((x, symbol), y) <- delta,
           (u, sf) <- replace_by,
@@ -191,12 +191,12 @@ normalise (states, alphabet, delta, start_state, accept_states)
           sym <- alphabet,
           u == x,
           v == y,
-          symbol == sym]  
+          symbol == sym]
     norm_accept_states
       = [norm_acpt_st |
           (x, norm_acpt_st) <- replace_by,
           y <- accept_states,
-          x == y] 
+          x == y]
 -------------------------------------------------------------------------
 
 --  To complete and then normalise a DFA:
@@ -211,15 +211,11 @@ full dfa
 
 complement :: DFA -> DFA
 complement (states, alphabet, delta, start_state, accept_states)
-  = (states', alphabet', delta', start_state', accept_states')
-  	where 
-  		(states', alphabet', delta', start_state', accept_states')
-  			= (states, alphabet, delta, start_state, states \\ accept_states)
-  		
-
-    
-
-
+  = complete (states', alphabet', delta', start_state', accept_states'')
+      where
+          (states', alphabet', delta', start_state', accept_states')
+              = complete (states, alphabet, delta, start_state, accept_states)
+          accept_states'' = states' \\ accept_states'
 
 -------------------------------------------------------------------------
 
@@ -237,10 +233,10 @@ prod dfa1 dfa2
 
 --  Here is an example (trimmed) DFA; it recognises a*ab*c*
 
-dex :: DFA 
-dex 
+dex :: DFA
+dex
   = ([0,1,2,3], "abc", t1, 0, [1,2,3])
-    where 
+    where
       t1 = [ ((0,'a'), 1)
            , ((1,'a'), 1)
            , ((1,'b'), 2)
@@ -251,4 +247,3 @@ dex
            ]
 
 -------------------------------------------------------------------------
-
