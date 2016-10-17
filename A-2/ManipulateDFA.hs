@@ -113,12 +113,12 @@ complete (states, alphabet, delta, start_state, accept_states)
       = (all_states, alphabet, comp_delta, start_state, accept_states)  
     where 
       already_complete = (all_transitions == map fst delta)
-      new_state
-       = maximum states + 1
       all_transitions 
         = [(state, sym) |
             state <- states,
             sym <- alphabet]
+      new_state
+       = maximum states + 1
       all_states
        = states ++ [new_state]
       all_perms 
@@ -127,15 +127,10 @@ complete (states, alphabet, delta, start_state, accept_states)
             sym <- alphabet]
       required_delta_for
         = tidy all_perms \\ map fst delta
-      to_reject = states \\ accept_states
       comp_delta
-        = [((rjct, sym), new_state) | 
-            (rjct, sym) <- required_delta_for,
-            r <- to_reject,
-            r == rjct] ++
-            [((acpt, sym), acpt) |
-            (acpt, sym) <- required_delta_for]
-            ++ delta
+        = [((st, sym), new_state) | 
+            (st, sym) <- required_delta_for] ++
+     		delta
 
 
 
@@ -216,7 +211,11 @@ full dfa
 
 complement :: DFA -> DFA
 complement (states, alphabet, delta, start_state, accept_states)
-  = complete (states, alphabet, delta, start_state, states \\ accept_states)
+  = (states', alphabet', delta', start_state', accept_states')
+  	where 
+  		(states', alphabet', delta', start_state', accept_states')
+  			= (states, alphabet, delta, start_state, states \\ accept_states)
+  		
 
     
 
