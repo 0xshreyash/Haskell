@@ -207,8 +207,7 @@ full dfa
 
 
 --  For a given DFA d, generate a DFA d' so that the languages of d
---  and d' are complementary.
-
+--  and d' are complementary
 complement :: DFA -> DFA
 complement (states, alphabet, delta, start_state, accept_states)
   = complete (states', alphabet', delta', start_state', accept_states'')
