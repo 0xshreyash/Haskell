@@ -3,6 +3,7 @@ module RunDFA (
 , run_DFA
 , use
 , trace
+, Decision(Accept, Reject)
 ) where
 
 import DFA
@@ -17,16 +18,16 @@ import Data.List (sort, nub, (\\))
     September 2013, extended September 2016
 ------------------------------------------------------------------------}
 
---  Usage: 
+--  Usage:
 --
 --  `run_DFA d input' where d is a DFA, that is, a tuple
---  (states, alphabet, delta, start_state, accept_states), where delta 
+--  (states, alphabet, delta, start_state, accept_states), where delta
 --  is a list that encodes the DFA's transition function.  In this list,
---  ((i,s),j) means: If, in state i you read symbol s, go to state j. 
+--  ((i,s),j) means: If, in state i you read symbol s, go to state j.
 --  States are assume to be natural numbers.  The alphabet must consist
 --  of digits and/or lower-case letters only.
 
---  The function `use' is useful for testing.  The action `use d' 
+--  The function `use' is useful for testing.  The action `use d'
 --  will query for input to d, run d on the input, print Accept
 --  or Reject, as appropriate, and query for new input.  This makes
 --  it easy to try the same DFA on different input.  The function
@@ -37,9 +38,9 @@ import Data.List (sort, nub, (\\))
 --  of state/input configurations in which the DFA has been.
 
 --  We rely on module Syntax to provide definitions of types as well as
---  tools for checking the well-formedness of DFAs. If the transition 
+--  tools for checking the well-formedness of DFAs. If the transition
 --  function is partial, it will be assumed that it is to be `completed'
---  in the usual way, by introducing an input-consuming reject state.  
+--  in the usual way, by introducing an input-consuming reject state.
 
 --  An example of a DFA, dex, in appropriate format, is given at the
 --  end of this script.
@@ -48,7 +49,7 @@ import Data.List (sort, nub, (\\))
 
 --  The result of running the DFA on some input is a Decision:
 
-data Decision 
+data Decision
   = Accept | Reject
     deriving (Eq, Show)
 
@@ -59,7 +60,7 @@ reject_all :: State
 reject_all
   = -1
 
---  The DFA steps through successive configurations.  A configuration 
+--  The DFA steps through successive configurations.  A configuration
 --  is a pair (state, remaining input). A computation history is a list
 --  of configurations.
 
@@ -69,7 +70,7 @@ type History = [Configuration]
 --  Initially we need to explore the configuration (start_state, input).
 
 run_DFA :: DFA -> Input -> Decision
-run_DFA dfa@(_, _, _, start_state, accept_states) input 
+run_DFA dfa@(_, _, _, start_state, accept_states) input
   = if state `elem` accept_states then Accept else Reject
     where
       (state,"") = head history
@@ -79,7 +80,7 @@ run_DFA dfa@(_, _, _, start_state, accept_states) input
 --  computation history rather than its decision.
 
 trace_DFA :: DFA -> Input -> History
-trace_DFA dfa input 
+trace_DFA dfa input
   = reverse history
     where
       (_, _, _, start_state, _) = dfa
@@ -88,7 +89,7 @@ trace_DFA dfa input
 run :: DFA -> Configuration -> History
 run dfa config
   = until final (step delta) [config]
-    where 
+    where
       (_, _, delta, _, _) = dfa
       final ((_,s):_) = null s
 
@@ -117,7 +118,7 @@ use d
         then do {putStrLn (show (run_DFA d input)); use d}
         else if (head input) == 'Q'
           then return ()
-          else do 
+          else do
             putStrLn "Input must be digits and/or lower case letters"
             use d
 
@@ -149,10 +150,10 @@ compliant
 
 --  Here is an example (trimmed) DFA; it recognises a*ab*c*
 
-dex :: DFA 
-dex 
+dex :: DFA
+dex
   = ([0,1,2,3], "abc", t1, 0, [1,2,3])
-    where 
+    where
       t1 = [ ((0, 'a'), 1)
            , ((1, 'a'), 1)
            , ((1, 'b'), 2)

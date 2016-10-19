@@ -2,7 +2,30 @@ module T
 where
 
 import RunTM
+{------------------------------------------------------
+Author: Shreyash Patodia
+COMP30026 Assignment 2, 2016
+Question 3
+-------------------------------------------------------}
 
+{-- The strategy that I adopt for this question is to
+ count the number of a's and c's by captializing them in
+ alternation in order to maintain a count of the numbers
+ of a and c relative to each other, if we run out of a's them
+ we should also run out of c's and vice versa.
+ We start off by capitalizing the first A and then looking for a
+ c (states 2, 3 and 4) and then we capitalize the c and go right
+ till we end the string. Then we go back and look for an a (State 6), if
+ there are no more a's then there should be no more c's and we check
+ for that and then if we find a c then the language specification
+ is not satisfied, if it does not have any c's left then the language
+ is upheld. Similarly if we run out of c's we check if we have any more
+ a's, if not then we accept else reject. This turning machine also makes
+ sure to reject incorrect input right off the bat. We print out a N or Y
+ as the output. If we have more a's then we first captialzie it and then look
+ for a c. This is basically like adding 1 -1 +1 etc in order to get 0 --}
+
+          {- 10 is the reject state, 11 is the accept state -} 
 t :: TM
 t = [((1, ' '), (2, ' ', R)),
      ((2, 'a'), (3, 'A', R)),

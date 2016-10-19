@@ -2,7 +2,23 @@ module U
 where
 
 import RunTM
+{------------------------------------------------------
+Author: Shreyash Patodia
+COMP30026 Assignment 2, 2016
+Question 4
+-------------------------------------------------------}
 
+{- In this question I take a similar approach to Question 3
+ the only difference being that we count the aggregate of
+ the number of b's and a's in comparison to the number of c's
+ so we first captialize the a (State 2 to 3) and then look for a
+ c. We then captialize the c and look for a or b, if we find either
+ then we capitalize that and look for a c. We do this until we run out of
+ either a and b or c, if we run out of the other one at the same time as
+ well then i + j = k and the machine does it's job-}
+
+                    {- 10 is the reject state
+                       9 is the accept state -}
 u :: TM
 u  = [((1, ' '), (2, ' ', R)),
       ((2, 'a'), (3, 'A', R)),

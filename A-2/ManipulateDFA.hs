@@ -26,6 +26,7 @@ tidy :: Ord a => [a] -> [a]
 tidy xs
   = nub (sort xs)
 
+--------------------------------------------------------------------------
 
 --  Calculate the set of reachable states in a given DFA.
 
@@ -183,7 +184,9 @@ normalise (states, alphabet, delta, start_state, accept_states)
     -- we have things like (1, 1) in replace_by as well
     norm_start_state
       = head [n_s_st | (x, n_s_st) <- replace_by,
-                x == start_state]
+                y <- states,
+                y == start_state,
+                y == x]
     norm_delta
       = [((sf, sym), st) | ((x, symbol), y) <- delta,
           (u, sf) <- replace_by,
@@ -223,8 +226,47 @@ complement (states, alphabet, delta, start_state, accept_states)
 
 prod :: DFA -> DFA -> DFA
 prod dfa1 dfa2
-  = dfa1
-
+    = complete prod_dfa
+    where
+        (states1, alphabet1, delta1, start_state1, accept_states1)
+            =   dfa1
+        (states2, alphabet2, delta2, start_state2, accept_states2)
+            =   dfa2
+        prod_dfa
+            = (prod_states, common_alphabet, prod_delta, prod_start_state, prod_accept_states)
+        max_val = find_max (maximum [maximum states1, length states1]) (maximum [maximum states2, length states2])
+        find_max max_dfa1 max_dfa2
+            | max_dfa1 > max_dfa2 = max_dfa1
+            | otherwise = max_dfa2
+        tuple_states
+            = [(x,y) | x <- states1, y <- states2]
+        prod_states
+            = map_state tuple_states max_val
+        map_state [] max_val = []
+        map_state (x:xs) max_val = [(fst x*max_val + snd x)] ++ (map_state xs max_val)
+        prod_start_state
+            = start_state1*max_val + start_state2
+        prod_accept_states
+            = [(x*max_val + y) | x <- accept_states1, y <- accept_states2]
+        -- We assume that both the languagages have the same alphabet so the
+        -- intersection of the alphabets will be the same as the ablphabets
+        -- themselves
+        common_alphabet
+            = intersect alphabet1 alphabet2
+        tuple_delta
+            = tidy [(((x, y), sym), (u, v)) |
+                ((x, sym), u) <- delta1,
+                ((y, s), v) <- delta2,
+                s <- common_alphabet,
+                sym == s]
+        prod_delta
+            = tidy [((x*max_val + y, sym), u*max_val + v) |
+                sym <- common_alphabet,
+                ((x, sym), u) <- delta1,
+                ((y, sym), v) <- delta2,
+                (((a, b), sym), (c, d)) <- tuple_delta,
+                (x, y) == (a, b),
+                (u, v) == (c, d)]
 
 
 
