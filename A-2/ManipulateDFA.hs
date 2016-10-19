@@ -40,6 +40,7 @@ reachable (states, alphabet, delta, start_state, accept_states)
       successors reach = [y | ((x,_),y) <- delta, x `elem` reach]
       stable (xs, ys) = xs == ys
 
+--------------------------------------------------------------------------
 
 --  Calculate the set of generating states in a given DFA.
 
@@ -59,6 +60,7 @@ generating (states, alphabet, delta, start_state, accept_states)
         = xs == ys
 
 
+--------------------------------------------------------------------------
 
 --  Trim a DFA, that is, keep only reachable, generating states
 --  (the start state should always be kept).
@@ -83,9 +85,7 @@ trim (states, alphabet, delta, start_state, accept_states)
         = intersect accept_states useful_states
 
 
-
-
-
+--------------------------------------------------------------------------
 
     --[useful_state |
     --- useful_state <- reach (states, alphabet, delta, start_state, accept_states)
@@ -98,10 +98,8 @@ trim (states, alphabet, delta, start_state, accept_states)
     --state_to <- useful_state
 
 
-
-
-
 -------------------------------------------------------------------------
+
 
 --  Complete a DFA, that is, make all transitions explict.  For a DFA,
 --  the transition function is always understood to be total.
@@ -134,7 +132,7 @@ complete (states, alphabet, delta, start_state, accept_states)
               delta
 
 
-
+--------------------------------------------------------------------------
 
       {-complete_delta
         = tidy delta ++ explicit_transitions
@@ -152,10 +150,6 @@ complete (states, alphabet, delta, start_state, accept_states)
       required_delta
         = tidy all_perms \\ map fst delta-}
 
-
-
-
-
 -------------------------------------------------------------------------
 
 --  Systematically replace the names of states in a DFA with 1..n.
@@ -172,18 +166,22 @@ normalise (states, alphabet, delta, start_state, accept_states)
     not_used_vals
       = tidy allowed_vals \\ allowed_vals_used
     -- Finding the values to be replace and what to replace them with
-    replace_by
+    replace_vals
       = replace states not_used_vals max_val
     replace [] [] max_val = []
     replace states [] max_val = []
-    replace [] not_used_vals max_val = []
+    --replace [] not_used_vals max_val = []
     replace (st:sts) (poss_st:poss_sts) max_val
-      | st <= max_val = [(st, st)] ++ replace sts (poss_st:poss_sts) max_val
+      | st <= 0 = [(st, poss_st)] ++ replace sts poss_sts max_val
+      | (st > 0 && st <= max_val) = replace sts (poss_st:poss_sts) max_val
       | otherwise = [(st, poss_st)] ++ replace sts poss_sts max_val
     -- Not a problem even if the start state is not > max_val since
     -- we have things like (1, 1) in replace_by as well
+    replace_by
+        = tidy replace_vals ++ [(x, x) | x <- states,
+                                x > 0, x <= max_val]
     norm_start_state
-      = head [n_s_st | (x, n_s_st) <- replace_by,
+      =  head [n_s_st | (x, n_s_st) <- replace_by,
                 y <- states,
                 y == start_state,
                 y == x]
@@ -208,6 +206,7 @@ full :: DFA -> DFA
 full dfa
   = normalise(complete dfa)
 
+--------------------------------------------------------------------------
 
 --  For a given DFA d, generate a DFA d' so that the languages of d
 --  and d' are complementary
@@ -226,18 +225,15 @@ complement (states, alphabet, delta, start_state, accept_states)
 
 prod :: DFA -> DFA -> DFA
 prod dfa1 dfa2
-    = complete prod_dfa
+    = full prod_dfa
     where
         (states1, alphabet1, delta1, start_state1, accept_states1)
-            =   dfa1
+            =   trim dfa1
         (states2, alphabet2, delta2, start_state2, accept_states2)
-            =   dfa2
+            =   trim dfa2
         prod_dfa
             = (prod_states, common_alphabet, prod_delta, prod_start_state, prod_accept_states)
-        max_val = find_max (maximum [maximum states1, length states1]) (maximum [maximum states2, length states2])
-        find_max max_dfa1 max_dfa2
-            | max_dfa1 > max_dfa2 = max_dfa1
-            | otherwise = max_dfa2
+        max_val = maximum [maximum states1, length states1, maximum states2, length states2]
         tuple_states
             = [(x,y) | x <- states1, y <- states2]
         prod_states
