@@ -37,5 +37,7 @@ e = (states, "abc", delta, 1, accept_states)
               then the DFA always accepts (i.e. states 1, 2, 3, 6, 7).
               If the length becomes 4 and we have more than one a then the
              DFA goes to state 10 (eg. state 6 to 10 on occurence of an a).
-              If the DFA is valid for the first four characters then it looks
-             for the next a if the next a too far (distance > 4) then we have a scenario where we cannot accept because there has to be a substring lacking an a (4 -> 8 -> 12 -> 10). If we find an a too fast we again have to reject as we need a at distance of 4--}
+        If the DFA is valid for the first four characters then it looks
+         for the next a if the next a too far (distance > 4) then we have a
+      scenario where we cannot accept because there has to be a substring
+          lacking an a (4 -> 8 -> 12 -> 10). If we find an a too fast we again have to reject as we need a at distance of 4--}
